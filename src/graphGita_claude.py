@@ -1,4 +1,4 @@
-import boto3
+import boto3 # boto3 is the AWS SDK for Python
 import json 
 import os
 from botocore.exceptions import ClientError
@@ -40,3 +40,4 @@ CHAPTER_INFO = {
 
 
 
+#AWS client
