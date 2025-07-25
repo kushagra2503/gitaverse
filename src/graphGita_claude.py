@@ -41,3 +41,73 @@ CHAPTER_INFO = {
 
 
 #AWS client
+class AWSCient:
+    def __init__(self, region_name='eu-west-1'):
+        self.s3_client = boto3.client('s3', region_name=region_name)
+        self.textract_client = boto3.client('textract', region_name=region_name)
+
+    def list_s3_doccuments(self,bucet_name, prefix):
+        try:
+            response = self.s3_client.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
+            if 'Contents' in response:
+                return [obj['Key'] for obj in response['Contents']
+                        if obj['Key'].endswith('.json') and not obj['Key'].endswith('/')]    
+                return []
+        except ClientError as e:
+            print(f"Error accessing S3:{e}")
+            return []  
+
+    def get_object(self,bucket_name, file_key):
+        try:
+            response = self.s3_client.get_object(Bucket=bucket_name, Key=file_key)
+            return response['Body'].read().decode('utf-8')
+        except ClientError as e:
+            print(f"Error getting object from S3: {e}")
+            return None
+
+    ##Claude API client to invoke the Claude model
+class ClaudeAPI:
+    def __init__(self, api_endpoint):
+        self.api_endpoint = api_endpoint
+    def invoke_claude_model(self,prompt):
+        try:
+            payload = {
+                "model": "bedrock-2023-05-31",
+                "max_tokens": 20000,
+                "temperature": 0.1,
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ]
+            } 
+
+            header = {
+                'Content-Type': 'application/json',
+            }
+
+            response = requests.post(self.api_endpoint, json=payload, headers=headers)
+
+            if response.status_code == 200:
+                claude_response = response.json()
+
+                if 'content' in claude_response and isinstance(claude_response['content'],list):
+                    return claude_response['content'][0]['text']
+                elif 'completion' in claude_response:
+                    return claude_response['completion']
+                elif 'body' in claude_response:
+                    body = json.loads(claude_response['body'])
+                    if 'content' in body and isinstance(body['content'],list):
+                        return body['content'][0]['text']
+                    elif 'completion' in body:
+                        return body['completion']
+                    
+                print(f"Unexpected response format: {response.text}")
+                return None
+            
+        except Exception as e:
+             print(f"Error invoking Claude model: {e}")
+             return None
+        
+##Load the chapter information from the JSON file
