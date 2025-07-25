@@ -111,3 +111,14 @@ class ClaudeAPI:
              return None
         
 ##Load the chapter information from the JSON file
+with open('bhagvad_gita_meta_data.json', 'r') as f:
+    chapter_info = json.load(f)
+
+#Function to call the Claude API
+def claude_call(system_content, user_content, temperature=0.1,max_tokens=300):
+    prompt = f"System: {system_content}\nUser: {user_content}"
+    claude_api = ClaudeAPI('https://URL') ## Replace actual url of api gateway
+    response = claude_api.invoke_claude_model(prompt)
+    return response.strip() if response else ""
+
+##Function to generate a summary of a chapter..
