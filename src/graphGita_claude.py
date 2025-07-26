@@ -122,3 +122,41 @@ def claude_call(system_content, user_content, temperature=0.1,max_tokens=300):
     return response.strip() if response else ""
 
 ##Function to generate a summary of a chapter..
+def generate_chapter_summary(chapter_number, chapter_name):
+    system_content = f"""You are an expert on the Bhagavad Gita. Provide a comprehensive analysis of Chapter {chapter_number}: {chapter_name} strictly in JSON format with the following structure and no other format:
+    {{
+        "summary": "Brief summary of the chapter",
+        "main_theme": "The overarching theme of the chapter",
+        "philosophical_aspects": ["List of key philosophical concepts addressed"],
+        "life_problems_addressed": ["List of life problems or questions this chapter helps address"],
+        "yoga_type": "The primary type of yoga (if any) discussed in this chapter (e.g., Bhakti Yoga, Karma Yoga, etc.)"
+    }}"""
+    user_content= f"Provide a comprehensive analysis of Chapter {chapter_number}: {chapter_name} of the Bhagavad Gita as specified."
+
+    response = claude_call(system_content, user_content, temperature=0.7, max_tokens=500)
+
+response = response.strip('`')
+if response.startswith('json'):
+    response = response[4:].strip()
+
+try:
+    return json.loads(response)
+except json.JSONDecodeError as e:
+    print(f"Error parsing JSOn for chapter {chapter_number} summary: {e}")
+    print("Raw response:", response)
+    #Return a default structure in case of error
+    return {
+            "summary": "Error generating summary",
+            "main_theme": "Error generating main theme",
+            "philosophical_aspects": ["Error generating philosophical aspects"],
+            "life_problems_addressed": ["Error generating life problems addressed"],
+            "yoga_type": "Error generating yoga type"
+    }
+
+#Function to check if chapter is complete based on the number of shlokas
+def is_chapter_complete(shloka_count):
+    system_content = "You are an expert on the Bhagavad Gita. Determine if the given number of shlokas completes Chapter 1."
+    user_content = f"Does {shloka_count} shlokas complete Chapter 1 of the Bhagavad Gita? Respond with only 'Yes' or 'No'."
+    response = claude_call(system_content, user_content, temperature=0.1, max_tokens=10)
+    return response.lower() == "yes"
+# Function to generate detailed graph schema information about a shloka
